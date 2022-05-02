@@ -19,12 +19,16 @@
 package me.gfuil.bmap.lite.activity;
 
 import android.Manifest;
+import android.animation.ArgbEvaluator;
+import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
 import android.app.FragmentTransaction;
 import android.app.NotificationManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -33,6 +37,7 @@ import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.CoordinatorLayout;
+
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -47,48 +52,111 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.InputFilter;
+import android.util.Log;
+import android.util.Pair;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.amap.api.maps.AMap;
+import com.amap.api.maps.CameraUpdateFactory;
+import com.amap.api.maps.model.BitmapDescriptorFactory;
+import com.amap.api.maps.model.LatLng;
+import com.amap.api.maps.model.LatLngBounds;
+import com.amap.api.maps.model.Marker;
+import com.amap.api.maps.model.MarkerOptions;
+import com.amap.api.maps.model.Polygon;
+import com.amap.api.maps.model.PolygonOptions;
+import com.amap.api.maps.model.Polyline;
+import com.amap.api.maps.model.PolylineOptions;
+import com.amap.api.maps.utils.SpatialRelationUtil;
+import com.amap.api.maps.utils.overlay.SmoothMoveMarker;
+import com.amap.api.services.core.AMapException;
+import com.amap.api.services.core.LatLonPoint;
+import com.amap.api.services.route.BusRouteResult;
+import com.amap.api.services.route.DriveRouteResult;
+import com.amap.api.services.route.RideRouteResult;
+import com.amap.api.services.route.RouteSearch;
+import com.amap.api.services.route.WalkPath;
+import com.amap.api.services.route.WalkRouteResult;
+import com.amap.mapapi.overlay.UserRouteOverlay;
+import com.amap.mapapi.overlay.WalkRouteOverlay;
 import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
+import com.google.gson.Gson;
+import com.oguzdev.circularfloatingactionmenu.library.FloatingActionMenu;
+import com.oguzdev.circularfloatingactionmenu.library.SubActionButton;
 
+import java.io.IOException;
 import java.net.URLDecoder;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import io.objectbox.Box;
 import me.gfuil.bmap.lite.BApp;
+import me.gfuil.bmap.lite.Index.GridIndex;
 import me.gfuil.bmap.lite.R;
 import me.gfuil.bmap.lite.adapter.SearchResultRecyclerAdapter;
+import me.gfuil.bmap.lite.adapter.TrajItem;
+import me.gfuil.bmap.lite.algorithm.DistanceUtils;
+import me.gfuil.bmap.lite.algorithm.GPSConverterUtils;
+import me.gfuil.bmap.lite.algorithm.RangeQuery;
+import me.gfuil.bmap.lite.algorithm.RiskUtils;
+import me.gfuil.bmap.lite.algorithm.TrajEvent;
+import me.gfuil.bmap.lite.algorithm.TrajEventType;
+import me.gfuil.bmap.lite.algorithm.TrajExtractor;
 import me.gfuil.bmap.lite.base.BaseActivity;
 import me.gfuil.bmap.lite.fragment.AmapFragment;
 import me.gfuil.bmap.lite.fragment.BaiduMapFragment;
 import me.gfuil.bmap.lite.interacter.ConfigInteracter;
 import me.gfuil.bmap.lite.interacter.FavoriteInteracter;
+import me.gfuil.bmap.lite.model.ESResult;
+import me.gfuil.bmap.lite.model.Hits;
 import me.gfuil.bmap.lite.model.MyPoiModel;
 import me.gfuil.bmap.lite.model.TypeMap;
 import me.gfuil.bmap.lite.model.TypeNavigation;
 import me.gfuil.bmap.lite.model.TypePoi;
 import me.gfuil.bmap.lite.model.TypeSearch;
+import me.gfuil.bmap.lite.storage.MappedTrajectory;
+import me.gfuil.bmap.lite.storage.ObjectBox;
+import me.gfuil.bmap.lite.storage.POI;
+import me.gfuil.bmap.lite.storage.RawTrajectory;
+import me.gfuil.bmap.lite.storage.RiskyTrajectory;
 import me.gfuil.bmap.lite.utils.AppUtils;
 import me.gfuil.bmap.lite.utils.LogUtils;
 import me.gfuil.bmap.lite.utils.PermissionUtils;
 import me.gfuil.bmap.lite.utils.StatusBarUtils;
 import me.gfuil.bmap.lite.utils.StringUtils;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * 首页
@@ -96,6 +164,7 @@ import me.gfuil.bmap.lite.utils.StringUtils;
  * @author gfuil
  */
 public class MainActivity extends BaseActivity implements View.OnClickListener, NavigationView.OnNavigationItemSelectedListener, SearchResultRecyclerAdapter.OnSelectSearchResultListener {
+    private static final String TAG = "BaseActivity";
     private static final String[] PERMISSIONS_LOCATION = {Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION};
     private static final int REQUEST_LOCATION = 100;
     public static final int REQUEST_SEARCH = 1000;
@@ -115,16 +184,82 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
     private SearchResultRecyclerAdapter mSearchPoiResultAdapter;
 
     public static boolean isExit = false;
+    private AMap amap;
+    private PieChart pieChart;
+    private PieData pieData;
 
+    private com.oguzdev.circularfloatingactionmenu.library.FloatingActionButton floatingMenuBtn;
+    private RawTrajectory curTraj;
+
+    private ArgbEvaluator argbEvaluator = new ArgbEvaluator();
+
+    private boolean isSpatialQueryMode=false;
+    private TextView quitQueryTextView;
+    //第一次加载时要设置地图监听滑动事件
+    private boolean isFirstLoad=true;
+
+    private long firstClick=0;
+    private android.app.AlertDialog.Builder queryDialogBuilder;
     private Timer timer;
+    private RouteSearch routeSearch;
 
-    private Handler handler = new Handler() {
-        @Override
+//    private Handler handler = new Handler() {
+//        @Override
+//        public void handleMessage(Message msg) {
+//            switch (msg.what) {
+//                case TIME_UP_OTHER:
+//                    getSchemeData(getIntent());
+//                    getOneStepData(getIntent());
+//                default:
+//                    break;
+//            }
+//        }
+//    };
+
+    private Handler handler=new Handler() {
+
+
         public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case TIME_UP_OTHER:
-                    getSchemeData(getIntent());
-                    getOneStepData(getIntent());
+            switch (msg.what){
+                //矩形范围查询不为空
+                case (1):
+                    //查询不为空
+//                    List<List<LatLng>> res= (List<List<LatLng>>) msg.obj;
+//                    int i=0;
+//                    for(List<LatLng> l:res){
+//                        amap.addPolyline(new PolylineOptions()
+//                                .useGradient(true)
+//                                .color(getResources().getColor(R.color.blue))
+//                                .width(10)
+//                                .addAll(l));
+//                        amap.addMarker(new MarkerOptions().title(String.valueOf(i)).icon(BitmapDescriptorFactory.fromResource(R.drawable.amap_start)).position(l.get(0)));
+//                        amap.addMarker(new MarkerOptions().title(String.valueOf(i)).icon(BitmapDescriptorFactory.fromResource(R.drawable.amap_end)).position(l.get(l.size()-1)));
+//                    }
+                    Toast.makeText(MainActivity.this,"查询成功",Toast.LENGTH_SHORT).show();
+                    break;
+                case (0):
+                    //查询为空
+                    Toast.makeText(MainActivity.this, "查询结果为空", Toast.LENGTH_SHORT).show();
+                    break;
+                //POI映射不为空
+                case (2):
+                    Toast.makeText(MainActivity.this,"查询成功",Toast.LENGTH_SHORT).show();
+                    break;
+                case (3):
+                    pieChart.setData(pieData);
+                    pieChart.invalidate();
+                    Legend l=pieChart.getLegend();
+                    //l.setOrientation(Legend.LegendOrientation.VERTICAL);
+                    l.setWordWrapEnabled(true);
+                    pieChart.setVisibility(View.VISIBLE);
+                    Description description = new Description();
+                    description.setText("");
+                    pieChart.setDescription(description);
+                    Toast.makeText(MainActivity.this,"请注意风险！",Toast.LENGTH_SHORT).show();
+                    break;
+                case (4):
+                    Toast.makeText(MainActivity.this,"分享成功",Toast.LENGTH_SHORT).show();
+                    break;
                 default:
                     break;
             }
@@ -137,14 +272,17 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         initView(R.layout.activity_main);
 
         getData();
-
-        checkTask();
+        ObjectBox.init(this);
+//        checkTask();
+//        initFloatingMenu();
+        
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-
+        setIntent(intent);
+        Log.i("new intent",intent.getExtras().getString("record"));
         getOneStepData(intent);
         getSchemeData(intent);
     }
@@ -284,10 +422,47 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         }
     }
 
+    public void onStart() {
+        super.onStart();
+    }
     @Override
     protected void onResume() {
         super.onResume();
         IS_FOREGROUND = true;
+        try {
+            routeSearch = new RouteSearch(this);
+        } catch (AMapException e) {
+            e.printStackTrace();
+        }
+        routeSearch.setRouteSearchListener(new RouteSearch.OnRouteSearchListener() {
+            @Override
+            public void onBusRouteSearched(BusRouteResult busRouteResult, int i) {
+                Log.i(TAG, "onDriveRouteSearched: " + i + busRouteResult.getPaths().toString());
+            }
+
+            @Override
+            public void onDriveRouteSearched(DriveRouteResult driveRouteResult, int i) {
+                Log.i(TAG, "onDriveRouteSearched: " + i + driveRouteResult.getPaths().toString());
+            }
+
+            @Override
+            public void onWalkRouteSearched(WalkRouteResult walkRouteResult, int i) {
+                Log.i(TAG, "onDriveRouteSearched: " + i + walkRouteResult.getPaths().toString());
+                UserRouteOverlay walkRouteOverlay = new UserRouteOverlay(
+                        getApplicationContext(), amap, walkRouteResult.getPaths().get(0),
+                        walkRouteResult.getStartPos(),
+                        walkRouteResult.getTargetPos());
+                walkRouteOverlay.setNodeIconVisibility(false);
+                walkRouteOverlay.removeFromMap();
+                walkRouteOverlay.addToMap();
+                walkRouteOverlay.zoomToSpan();
+            }
+
+            @Override
+            public void onRideRouteSearched(RideRouteResult rideRouteResult, int i) {
+                Log.i(TAG, "onDriveRouteSearched: " + i + rideRouteResult.getPaths().toString());
+            }
+        });
         //常亮
         ConfigInteracter configInteracter = new ConfigInteracter(this);
         if (configInteracter.isScreenLightAlways()) {
@@ -296,6 +471,29 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
 
+        if(isFirstLoad){
+            initMap1();
+            isFirstLoad=false;
+        }
+
+        showChoosedTraj("","", new String[0]);
+        Intent intent=getIntent();
+        if(intent!=null){
+            Bundle bundle=intent.getExtras();
+            if(bundle!=null) {
+                if(bundle.getString("id")!=null) {
+                    String id = bundle.getString("id");
+                    String record = bundle.getString("record");
+                    String starttime=bundle.getString("starttime");
+                    String endtime=bundle.getString("endtime");
+                    Box<RawTrajectory> rawTrajectoryBox = ObjectBox.get().boxFor(RawTrajectory.class);
+                    curTraj = rawTrajectoryBox.get(Long.valueOf(id));
+                    showChoosedAddress(id, bundle.getString("ads_record"), bundle.getStringArray("ads_extra"));
+                    showChoosedTraj(id, record, bundle.getStringArray("extra"));
+                }
+//                initFloatingMenu();
+            }
+        }
     }
 
     @Override
@@ -322,12 +520,43 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         mTextShare = getView(R.id.text_share);
         mRecycleResult = getView(R.id.recycler_result);
 
+//        mLayPoi = getView(R.id.lay_poi);
+//        mLaySearchResult = getView(R.id.lay_search_result);
+//
+//        btnLine = getView(R.id.fab_line);
+//        //mBtnRoute = getView(R.id.fab_route);
+//        //btnLine.setOnClickListener(this);
+//        textSearch.setOnClickListener(this);
+//
+//        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+//        layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+//        mRecycleResult.setLayoutManager(layoutManager);
+//        mRecycleResult.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
+
+        pieChart = getView(R.id.pic_chart);
+        pieChart.setVisibility(View.INVISIBLE);
+
         mLayPoi = getView(R.id.lay_poi);
+
+        quitQueryTextView=findViewById(R.id.quit_query);
+        quitQueryTextView.setVisibility(View.INVISIBLE);
+        quitQueryTextView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                quitQueryTextView.setVisibility(View.INVISIBLE);
+                Toast.makeText(MainActivity.this, "退出空间查询模式", Toast.LENGTH_SHORT).show();
+                isSpatialQueryMode=false;
+                amap.getUiSettings().setAllGesturesEnabled(true);
+                amap.clear();
+            }
+        });
+
         mLaySearchResult = getView(R.id.lay_search_result);
 
+
         btnLine = getView(R.id.fab_line);
-        //mBtnRoute = getView(R.id.fab_route);
-        //btnLine.setOnClickListener(this);
+
+        btnLine.setOnClickListener(this);
         textSearch.setOnClickListener(this);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
@@ -362,9 +591,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
             layoutParams2.bottomMargin = AppUtils.dip2Px(this, 10);
             cardView.setLayoutParams(layoutParams2);
 
-            FrameLayout layStatus = getView(R.id.lay_status);
-            layStatus.setLayoutParams(new CoordinatorLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, statusHeight));
-            layStatus.setVisibility(View.VISIBLE);
+//            FrameLayout layStatus = getView(R.id.lay_status);
+//            layStatus.setLayoutParams(new CoordinatorLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, statusHeight));
+//            layStatus.setVisibility(View.VISIBLE);
 
         }
 
@@ -372,18 +601,29 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
         showPoiLay(null, -1);
 
+        if (BApp.TYPE_MAP == TypeMap.TYPE_BAIDU) {
+            mAmapFragment = AmapFragment.newInstance();
+            getSupportFragmentManager().beginTransaction().replace(R.id.lay_content, mAmapFragment).setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE).commit();
+
+        } else if (BApp.TYPE_MAP == TypeMap.TYPE_AMAP) {
+            mAmapFragment = AmapFragment.newInstance();
+            getSupportFragmentManager().beginTransaction().replace(R.id.lay_content, mAmapFragment).setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE).commit();
+        }
+
+
     }
 
     private void initMap() {
         if (BApp.TYPE_MAP == TypeMap.TYPE_BAIDU) {
             baiduMapFragment = BaiduMapFragment.newInstance();
-            getFragmentManager().beginTransaction().replace(R.id.lay_content, baiduMapFragment).setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.lay_content, baiduMapFragment).setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE).commit();
         } else if (BApp.TYPE_MAP == TypeMap.TYPE_AMAP) {
             mAmapFragment = AmapFragment.newInstance();
-            getFragmentManager().beginTransaction().replace(R.id.lay_content, mAmapFragment).setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.lay_content, mAmapFragment).setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE).commit();
         }
 
         mBehaviorPoi = BottomSheetBehavior.from(mLayPoi);
+        mBehaviorPoi.setHideable(true);
         mBehaviorPoi.setState(BottomSheetBehavior.STATE_HIDDEN);
         mBehaviorPoi.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
@@ -416,10 +656,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
             @Override
             public void onStateChanged(@NonNull View bottomSheet, int newState) {
                 if (newState == BottomSheetBehavior.STATE_HIDDEN) {
-                    btnLine.setVisibility(View.VISIBLE);
+                    btnLine.show();
 
                 } else {
-                    btnLine.setVisibility(View.GONE);
+                    btnLine.hide();
                 }
             }
 
@@ -428,6 +668,440 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
             }
         });
+    }
+
+
+    private void initMap1() {
+
+        final LatLng[] points = new LatLng[2];
+        final PolygonOptions polygonOptions=new PolygonOptions();
+        polygonOptions.strokeColor(getResources().getColor(R.color.keyword11));
+        polygonOptions.strokeWidth(2f);
+        polygonOptions.fillColor(Color.parseColor("#11000000"));
+        amap=mAmapFragment.mAmap;
+        final Polygon[] rec = {amap.addPolygon(polygonOptions)};
+        amap.getUiSettings().setZoomGesturesEnabled(false);
+
+        amap.setOnMapTouchListener(new AMap.OnMapTouchListener() {
+            @Override
+            public void onTouch(MotionEvent motionEvent) {
+                switch(motionEvent.getAction()){
+                    case MotionEvent.ACTION_DOWN:
+                        Log.i("Action down", String.valueOf(firstClick));
+                        if(isSpatialQueryMode) {
+                            double down_x = motionEvent.getX();
+                            double down_y = motionEvent.getY();
+                            Point p = new Point();
+                            p.set((int) down_x, (int) down_y);
+                            LatLng left_up = amap.getProjection().fromScreenLocation(p);
+                            points[0] = left_up;
+                        }
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        if(isSpatialQueryMode) {
+                            if (null != rec[0]) {
+                                rec[0].remove();
+                            }
+                            polygonOptions.getPoints().clear();
+                            double moving_x = motionEvent.getX();
+                            double moving_y = motionEvent.getY();
+                            Point movingP = new Point();
+                            movingP.set((int) moving_x, (int) moving_y);
+                            LatLng right_down = amap.getProjection().fromScreenLocation(movingP);
+                            points[1] = right_down;
+                            List<LatLng> res = createRectangle(points[0], right_down);
+                            for (LatLng l : res) {
+                                polygonOptions.add(l);
+                            }
+                            rec[0] = amap.addPolygon(polygonOptions);
+                        }
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        if(isSpatialQueryMode) {
+                            if(queryDialogBuilder==null) {
+                                queryDialogBuilder = new android.app.AlertDialog.Builder(MainActivity.this);
+                                queryDialogBuilder.setTitle("提示");
+                                queryDialogBuilder.setMessage("是否查询当前区域内的轨迹");
+                                queryDialogBuilder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        new Thread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                List<List<LatLng>> res = queryTrajInRect(points[0], points[1]);
+                                                Message msg = Message.obtain();
+                                                msg.obj = res;
+                                                if (res.size() == 0) {
+                                                    msg.what = 0;
+                                                } else {
+                                                    msg.what = 1;
+                                                }
+                                                handler.sendMessage(msg);
+                                            }
+                                        }).start();
+                                    }
+                                });
+                                queryDialogBuilder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        if(rec[0]!=null){
+                                            rec[0].remove();
+                                            amap.clear();
+                                        }
+
+                                    }
+                                });
+                            }
+                            queryDialogBuilder.show();
+                        }
+
+                        break;
+                }
+            }
+        });
+
+        amap.setMyLocationEnabled(true);
+
+    }
+
+    public void initFloatingMenu(){
+        if(floatingMenuBtn!=null){
+            floatingMenuBtn.setVisibility(View.VISIBLE);
+            return;
+        }
+        final ImageView fabIconNew = new ImageView(this);
+        fabIconNew.setImageDrawable(getResources().getDrawable(R.drawable.plus));
+        floatingMenuBtn = new com.oguzdev.circularfloatingactionmenu.library.FloatingActionButton.Builder(this).setContentView(fabIconNew)
+                .setPosition(com.oguzdev.circularfloatingactionmenu.library.FloatingActionButton.POSITION_LEFT_CENTER)
+                .build();
+
+        SubActionButton.Builder rLSubBuilder = new SubActionButton.Builder(this);
+        ImageView rLIcon1 = new ImageView(this);
+        ImageView rLIcon2 = new ImageView(this);
+        ImageView rLIcon3 = new ImageView(this);
+        ImageView rLIcon4 = new ImageView(this);
+        ImageView rLIcon5 = new ImageView(this);
+        ImageView rLIcon6 = new ImageView(this);
+        // 映射至bus路线,映射至POI,附近风险,关闭菜单
+        rLIcon1.setImageDrawable(getResources().getDrawable(R.drawable.amap_bus));
+        rLIcon2.setImageDrawable(getResources().getDrawable(R.drawable.amap_through));
+        rLIcon3.setImageDrawable(getResources().getDrawable(R.drawable.ic_info_24dp));
+        rLIcon4.setImageDrawable(getResources().getDrawable(R.drawable.ic_undo_24dp));
+        rLIcon5.setImageDrawable(getResources().getDrawable(R.drawable.ic_share_18dp));
+        rLIcon6.setImageDrawable(getResources().getDrawable(R.drawable.ic_search_white_24dp));
+
+        final FloatingActionMenu rightLowerMenu = new FloatingActionMenu.Builder(this)
+                .addSubActionView(rLSubBuilder.setContentView(rLIcon1).build())
+                .addSubActionView(rLSubBuilder.setContentView(rLIcon2).build())
+                .addSubActionView(rLSubBuilder.setContentView(rLIcon3).build())
+                .addSubActionView(rLSubBuilder.setContentView(rLIcon5).build())
+                .addSubActionView(rLSubBuilder.setContentView(rLIcon6).build())
+                .addSubActionView(rLSubBuilder.setContentView(rLIcon4).build())
+                .attachTo(floatingMenuBtn).build();
+
+        //显示Bus路线
+        rLIcon1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //计算bus路线
+                if(curTraj==null){
+                    Toast.makeText(MainActivity.this, "请选择一条轨迹数据", Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            String filePath = getApplicationContext().getFilesDir().getAbsolutePath();
+                            String fileName = filePath + "/" + "wuhan_poi_index";
+                            GridIndex.loadIndex(fileName);
+                            Log.i("curTraj", curTraj.record);
+                            List<TrajEvent> events = TrajExtractor.executeForBusLines(curTraj.record, curTraj.starttime, curTraj.endtime);
+                            for (TrajEvent e : events) {
+                                LatLng latLng = GPSConverterUtils.bd09_To_Gcj02(e.loc.lat, e.loc.lng);
+                                if (e.getTrajEventType() == TrajEventType.ON_BUS) {
+                                    amap.addMarker(new MarkerOptions().title("上车").icon(BitmapDescriptorFactory.fromResource(R.drawable.bus)).position(latLng));
+
+                                } else {
+                                    amap.addMarker(new MarkerOptions().title("下车").icon(BitmapDescriptorFactory.fromResource(R.drawable.bus)).position(latLng));
+
+                                }
+                            }
+
+                            Message msg = Message.obtain();
+                            if (events.size() == 0) {
+                                msg.what = 0;
+                            } else {
+                                msg.what = 2;
+                            }
+
+                            handler.sendMessage(msg);
+                        }
+                    }).start();
+                }
+            }
+        });
+
+
+        //显示POI
+        rLIcon2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(curTraj==null){
+                    Toast.makeText(MainActivity.this, "请选择一条轨迹数据", Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            String filePath = getApplicationContext().getFilesDir().getAbsolutePath();
+                            String fileName = filePath + "/" + "wuhan_poi_index";
+                            GridIndex.loadIndex(fileName);
+                            Box<POI> poiBox = ObjectBox.get().boxFor(POI.class);
+                            Log.i("curTraj", curTraj.record);
+                            List<TrajEvent> events = TrajExtractor.executeForPOIs(curTraj.record, curTraj.starttime, curTraj.endtime);
+                            //绘制经过的POI
+                            for (TrajEvent te : events) {
+                                Log.i("POI　mapping", te.toString());
+                                POI poi = poiBox.get(te.loc.id);
+                                String name = poi.name;
+                                LatLng l = GPSConverterUtils.bd09_To_Gcj02(te.loc.lat, te.loc.lng);
+                                amap.addMarker(new MarkerOptions().title(name).icon(BitmapDescriptorFactory.fromResource(R.drawable.amap_through)).position(l));
+                            }
+
+                            Message msg = Message.obtain();
+                            if (events.size() == 0) {
+                                msg.what = 0;
+                            } else {
+                                msg.what = 2;
+                            }
+
+                            handler.sendMessage(msg);
+
+                        }
+                    }
+                    ).start();
+                }
+            }
+        });
+
+
+        //显示风险POI,以及附近的风险轨迹
+        rLIcon3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(curTraj==null){
+                    Toast.makeText(MainActivity.this, "请选择一条轨迹数据", Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Log.i("curTraj", curTraj.record);
+
+                            Box<RiskyTrajectory> riskyTrajectoryBox = ObjectBox.get().boxFor(RiskyTrajectory.class);
+                            MappedTrajectory mappedTrajectory = curTraj.mappedTrajectoryToOne.getTarget();
+                            List<RiskyTrajectory> riskyTrajectoryList = riskyTrajectoryBox.getAll();
+                            List<RiskyTrajectory> candidateTrajs = new ArrayList<>();
+                            List<Double> riskVals = new ArrayList<>();
+                            for (RiskyTrajectory traj : riskyTrajectoryList) {
+                                double riskval = RiskUtils.calculateRisk(mappedTrajectory, traj);
+                                if (riskval > 0.0000000000001) {
+                                    candidateTrajs.add(traj);
+                                    riskVals.add(riskval);
+                                }
+                            }
+                            int totalnum = riskVals.size();
+                            Message msg = Message.obtain();
+                            if (totalnum == 0) {
+                                msg.what = 2;
+                            } else {
+                                msg.what = 3;
+                            }
+                            if (totalnum != 0) {
+                                int startValue = Color.parseColor("#FF0000");
+                                int endValue = Color.parseColor("#00FF00");
+                                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                                List<PieEntry> pieEntries = new ArrayList<>();
+                                List<Integer> colors = new ArrayList<>();
+                                for (int i = 0; i < candidateTrajs.size(); i++) {
+                                    int color = (int) argbEvaluator.evaluate((float) i / totalnum, startValue, endValue);
+                                    RiskyTrajectory riskyTrajectory = candidateTrajs.get(i);
+                                    List<TrajEvent> events = RiskUtils.generateTrajEvents(riskyTrajectory.record);
+                                    List<LatLng> latLngs = new ArrayList<>();
+                                    colors.add(color);
+                                    for (TrajEvent e : events) {
+                                        LatLng latLng = new LatLng(e.loc.lat, e.loc.lng);
+                                        StringBuffer d = new StringBuffer();
+                                        d.append(sdf.format(e.starttime));
+                                        d.append("-");
+                                        d.append(sdf.format(e.endtime));
+                                        amap.addMarker(new MarkerOptions().title(d.toString()).position(latLng).icon(BitmapDescriptorFactory.fromResource(R.drawable.risk)));
+                                        latLngs.add(latLng);
+                                    }
+                                    pieEntries.add(new PieEntry(Float.valueOf(String.valueOf(riskVals.get(i))), String.valueOf(i)));
+                                    amap.addPolyline(new PolylineOptions().color(color).addAll(latLngs).width(10).setDottedLine(true));
+                                }
+                                PieDataSet pieDataSet = new PieDataSet(pieEntries, "相似度");
+                                pieDataSet.setColors(colors);
+                                pieData = new PieData(pieDataSet);
+                                pieData.setDrawValues(true);
+                                pieData.setValueTextSize(12f);
+                            }
+
+                            handler.sendMessage(msg);
+                        }
+                    }).start();
+                }
+            }
+        });
+
+        rLIcon4.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                rightLowerMenu.close(false);
+                //floatingMenuBtn.setVisibility(View.INVISIBLE);
+                pieChart.setVisibility(View.INVISIBLE);
+                amap.clear();
+
+            }
+        });
+
+        rLIcon5.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Message msg = Message.obtain();
+                        msg.what = 4;
+                        handler.sendMessage(msg);
+
+                    }
+                }).start();
+            }
+        });
+
+        rLIcon6.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                isSpatialQueryMode=true;
+                if(quitQueryTextView.getVisibility()!=View.VISIBLE){
+                    quitQueryTextView.setVisibility(View.VISIBLE);
+                }
+                Toast.makeText(MainActivity.this, "进入空间查询模式", Toast.LENGTH_SHORT).show();
+                amap.getUiSettings().setAllGesturesEnabled(false);
+
+            }
+        });
+
+        rightLowerMenu.setStateChangeListener(new FloatingActionMenu.MenuStateChangeListener() {
+            @Override
+            public void onMenuOpened(FloatingActionMenu floatingActionMenu) {
+                fabIconNew.setRotation(0);
+                PropertyValuesHolder pvhR=PropertyValuesHolder.ofFloat(View.ROTATION,45);
+                ObjectAnimator animation = ObjectAnimator.ofPropertyValuesHolder(fabIconNew, pvhR);
+                animation.start();
+            }
+
+            @Override
+            public void onMenuClosed(FloatingActionMenu floatingActionMenu) {
+                fabIconNew.setRotation(45);
+                PropertyValuesHolder pvhR = PropertyValuesHolder.ofFloat(View.ROTATION, 0);
+                ObjectAnimator animation = ObjectAnimator.ofPropertyValuesHolder(fabIconNew, pvhR);
+                animation.start();
+            }
+        });
+
+
+
+    }
+
+    private void showChoosedTraj(String id,String record, String[] extra){
+//        record = "116.478935,116.478939,116.478912,116.478912,116.478998,116.478998,116.479282,116.479658,116.480151,116.480784,116.480784,116.481149,116.481573,116.481863,116.482072,116.482362,116.483633,116.48367,116.484648;39.997761,39.997825,39.998549,39.998549,39.998555,39.998555,39.99856,39.998528,39.998453,39.998302,39.998302,39.998184,39.997997,39.997846,39.997718,39.997718,39.998935,39.998968,39.999861";
+        Log.i("record",record);
+
+
+        if(record.length() > 5){
+            String[] latlngs=record.split(";");
+            String[] lngs=latlngs[0].split(",");
+            String[] lats=latlngs[1].split(",");
+            assert (lngs.length==lats.length);
+            List<LatLng> coors=new ArrayList<>();
+            for(int i=0;i<lngs.length;i++){
+                coors.add(new LatLng(Double.parseDouble(lats[i]),Double.parseDouble(lngs[i])));
+            }
+            Log.i("In main activity:",coors.toString());
+            int index = 0;
+            LatLng preLatLng = coors.get(0);
+            // 绘画轨迹
+            for (int i = 1; i < coors.size(); i++) {
+                RouteSearch.FromAndTo fromAndTo = new RouteSearch.FromAndTo(new LatLonPoint(preLatLng.latitude, preLatLng.longitude), new LatLonPoint(coors.get(i).latitude, coors.get(i).longitude));
+                int mode = 0;
+                RouteSearch.WalkRouteQuery query = new RouteSearch.WalkRouteQuery(fromAndTo, RouteSearch.WALK_DEFAULT);
+                routeSearch.calculateWalkRouteAsyn(query);
+                preLatLng = coors.get(i);
+            }
+            for (LatLng latLng: coors) {
+                String title = index < extra.length ? extra[index++] : "non";
+                if (title.startsWith(",") || title.startsWith(":") || title.startsWith("；") || title.startsWith("。")) {
+                    title = title.substring(1);
+                }
+                if (title.endsWith(",") || title.endsWith(":") || title.endsWith("；") || title.endsWith("。")) {
+                    title = title.substring(0, title.length() - 1);
+                }
+                amap.addMarker(new MarkerOptions().icon(BitmapDescriptorFactory.fromResource(R.drawable.icon_gcoding_2)).position(latLng).title(title));
+            }
+
+//            amap.addMarker(new MarkerOptions().title("起点").icon(BitmapDescriptorFactory.fromResource(R.drawable.amap_start)).position(coors.get(0)));
+//            amap.addMarker(new MarkerOptions().title("终点").icon(BitmapDescriptorFactory.fromResource(R.drawable.amap_end)).position(coors.get(coors.size()-1)));
+//            Polyline polyline=amap.addPolyline(new PolylineOptions().useGradient(true).color(getResources().getColor(R.color.blue)).width(10).addAll(coors));
+//            amap.addPolyline(polyline.getOptions());
+            amap.moveCamera(CameraUpdateFactory.changeLatLng(coors.get(0)));
+
+        }
+        else{
+            Log.i("In main activity:","record is null");
+        }
+    }
+
+    private void showChoosedAddress(String id,String record, String[] extra){
+//        record = "116.478935,116.478939,116.478912,116.478912,116.478998,116.478998,116.479282,116.479658,116.480151,116.480784,116.480784,116.481149,116.481573,116.481863,116.482072,116.482362,116.483633,116.48367,116.484648;39.997761,39.997825,39.998549,39.998549,39.998555,39.998555,39.99856,39.998528,39.998453,39.998302,39.998302,39.998184,39.997997,39.997846,39.997718,39.997718,39.998935,39.998968,39.999861";
+        Log.i("record",record);
+
+
+        if(record.length() > 5){
+            String[] latlngs=record.split(";");
+            String[] lngs=latlngs[0].split(",");
+            String[] lats=latlngs[1].split(",");
+            assert (lngs.length==lats.length);
+            List<LatLng> coors=new ArrayList<>();
+            for(int i=0;i<lngs.length;i++){
+                coors.add(new LatLng(Double.parseDouble(lats[i]),Double.parseDouble(lngs[i])));
+            }
+            Log.i("In main activity:",coors.toString());
+            int index = 0;
+
+            for (LatLng latLng: coors) {
+                String title = index < extra.length ? extra[index++] : "non";
+                if (title.startsWith(",") || title.startsWith(":") || title.startsWith("；") || title.startsWith("。")) {
+                    title = title.substring(1);
+                }
+                if (title.endsWith(",") || title.endsWith(":") || title.endsWith("；") || title.endsWith("。")) {
+                    title = title.substring(0, title.length() - 1);
+                }
+                amap.addMarker(new MarkerOptions().icon(BitmapDescriptorFactory.fromResource(R.drawable.icon_gcoding_2)).position(latLng).title(title));
+            }
+
+//            amap.addMarker(new MarkerOptions().title("起点").icon(BitmapDescriptorFactory.fromResource(R.drawable.amap_start)).position(coors.get(0)));
+//            amap.addMarker(new MarkerOptions().title("终点").icon(BitmapDescriptorFactory.fromResource(R.drawable.amap_end)).position(coors.get(coors.size()-1)));
+//            Polyline polyline=amap.addPolyline(new PolylineOptions().useGradient(true).color(getResources().getColor(R.color.blue)).width(10).addAll(coors));
+//            amap.addPolyline(polyline.getOptions());
+            amap.moveCamera(CameraUpdateFactory.changeLatLng(coors.get(0)));
+
+        }
+        else{
+            Log.i("In main activity:","record is null");
+        }
     }
 
     public void showPoiLay(final MyPoiModel poi, final int distance) {
@@ -917,9 +1591,133 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
             startActivityForResult(intent, REQUEST_SEARCH);
         } else if (id == R.id.nav_setting) {
             openActivity(SettingActivity.class);
+        }else if (id==R.id.record_traj){
+            openActivity(RecordTrajActivity.class);
+        }else if(id==R.id.search_trajectory){
+            openActivity(SearchTrajectoyActivity.class);
+        }else if(id==R.id.show_trajectory){
+            showAllRiskTrajectory();
+            mDrawer.closeDrawer(GravityCompat.START);
+        }
+        else if(id==R.id.nav_load_data){
+            openActivity(DataLoadActivity.class);
         }
 
         return true;
+    }
+
+
+    private void showAllRiskTrajectory() {
+        String url = "http://47.105.33.143:9200/risk_trajectory/_search?size=100";
+        OkHttpClient okHttpClient = new OkHttpClient();
+        final Request request = new Request.Builder()
+                .url(url)
+                .get()//默认就是GET请求，可以不写
+                .build();
+        Call call = okHttpClient.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.w(TAG, "onEditorAction: setOnEditorActionListener", e);
+            }
+
+            @Override
+            public void onResponse( Call call, Response response) throws IOException {
+                List<TrajItem> trajList = new ArrayList<>();
+                Log.w(TAG, "onEditorAction: setOnEditorActionListener"+ response.code(), null);
+                Gson gson = new Gson();
+                assert response.body() != null;
+                String responseText = response.body().string();
+                responseText = responseText.replaceFirst("hits", "result");
+                ESResult esResult = gson.fromJson(responseText, ESResult.class);
+                Log.i(TAG, "onResponse: " + esResult.toString());
+                int i = 1;
+                for (Hits hits: esResult.getResult().getHits()) {
+
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    StringBuilder lng = new StringBuilder();
+                    StringBuilder lat = new StringBuilder();
+                    StringBuilder adsLng = new StringBuilder();
+                    StringBuilder adsLat = new StringBuilder();
+//                    Log.i(TAG, "onEditorAction: " + hits.toString());
+
+                    Date start = new Date(System.currentTimeMillis());
+                    Date end = new Date(0);
+                    String[] adsExtra = new String[hits.get_source().getAddress_location() == null ? 0 : hits.get_source().getAddress_location().length];
+                    if (hits.get_source().getAddress_location() != null) {
+
+                        for (int k = 0; k < hits.get_source().getAddress_location().length; k++) {
+                            String[] adsLngLat = hits.get_source().getAddress_location()[k][0].split(",");
+                            if (adsLng.length() != 0) {
+                                adsLng.append(",");
+                                adsLat.append(",");
+                            }
+                            adsLng.append(adsLngLat[0]);
+                            adsLat.append(adsLngLat[1]);
+                            String adsInfo = hits.get_source().getAddress()[k];
+                            adsExtra[k] = "居住地：" + adsInfo;
+                        }
+                    }
+
+                    List<String> actionList = new ArrayList<>();
+                    if (hits.get_source().getTrajectory_detail() != null) {
+                        String[] splits = hits.get_source().getTrajectory_detail();
+                        Arrays.sort(splits);
+                        for (String str: splits) {
+                            if (!str.contains("@"))break;
+                            actionList.add(str.split("@")[1]);
+                        }
+                    }
+//                    Log.i(TAG, "onEditorAction: " + map);
+//                    Log.i(TAG, "onEditorAction: " + Arrays.toString(hits.get_source().getTrajectory_location()));
+                    String[] extra = new String[hits.get_source().getTrajectory_location() == null ? 0 : hits.get_source().getTrajectory_location().length];
+                    if (hits.get_source().getTrajectory_location() != null) {
+                        String[] splits = hits.get_source().getTrajectory_location();
+                        Arrays.sort(splits);
+
+                        for (int k = 0; k < hits.get_source().getTrajectory_location().length; k++) {
+
+                            String[] splitStrs = splits[k].split("@");
+                            String[] traLngLat = splitStrs[1].split(",");
+                            if (lng.length() != 0) {
+                                lng.append(",");
+                                lat.append(",");
+                            }
+                            lng.append(traLngLat[0]);
+                            lat.append(traLngLat[1]);
+                            try {
+                                Date actDate = sdf.parse(splitStrs[0]);
+                                assert actDate != null;
+                                if (actDate.getTime() < start.getTime() ) start = actDate;
+                                extra[k] = splitStrs[0]+ "：" +actionList.get(k);
+                                if (end.getTime() < actDate.getTime()) end = actDate;
+//                                Log.i(TAG, "onEditorAction: " + actDate);
+                            } catch (ParseException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+
+//                    Log.i(TAG, "onEditorAction: " + Arrays.toString(extra));
+//                    Log.i(TAG, "onEditorAction: " + Arrays.toString(adsExtra));
+
+                    String record = lng.toString() + ";" + lat.toString();
+                    String adsRecord = adsLng.toString() + ";" + adsLat.toString();
+//                    Log.i(TAG, "onEditorAction: " + record);
+//                    Log.i(TAG, "onEditorAction: " + adsRecord);
+                    if (record.length() > 5 ) {
+                            trajList.add(new TrajItem(i, sdf.format(start), sdf.format(end), record, i++, start.getTime(), end.getTime(), DistanceUtils.getTrajdistance(record), extra, adsRecord, adsExtra));
+                    }
+
+                }
+
+                for (TrajItem trajItem: trajList) {
+                    showChoosedTraj("0", trajItem.record, trajItem.actions);
+                    showChoosedAddress("0", trajItem.ads_record, trajItem.address_info);
+                }
+            }
+
+        });
     }
 
     private void changeMap(MenuItem item) {
@@ -927,7 +1725,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
             if (null == mAmapFragment) {
                 mAmapFragment = AmapFragment.newInstance();
             }
-            getFragmentManager().beginTransaction().replace(R.id.lay_content, mAmapFragment).setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.lay_content, mAmapFragment).setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE).commit();
 
             BApp.TYPE_MAP = TypeMap.TYPE_AMAP;
             item.setTitle("切换百度地图");
@@ -939,7 +1737,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
             if (null == baiduMapFragment) {
                 baiduMapFragment = BaiduMapFragment.newInstance();
             }
-            getFragmentManager().beginTransaction().replace(R.id.lay_content, baiduMapFragment).setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.lay_content, baiduMapFragment).setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE).commit();
 
             BApp.TYPE_MAP = TypeMap.TYPE_BAIDU;
             item.setTitle("切换高德地图");
@@ -1067,6 +1865,32 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         } else if (TypeMap.TYPE_AMAP == BApp.TYPE_MAP && null != mAmapFragment) {
             mAmapFragment.showOtherPoi(poi);
         }
+    }
+
+    private List<LatLng> createRectangle(LatLng leftup,LatLng rightdown){
+        LatLng p1=new LatLng(leftup.latitude,leftup.longitude);
+        LatLng p2=new LatLng(leftup.latitude,rightdown.longitude);
+        LatLng p3=new LatLng(rightdown.latitude,rightdown.longitude);
+        LatLng p4=new LatLng(rightdown.latitude,leftup.longitude);
+        List<LatLng> res=new ArrayList<>();
+        res.add(p1);
+        res.add(p2);
+        res.add(p3);
+        res.add(p4);
+        return res;
+    }
+
+    public List<List<LatLng>> queryTrajInRect(LatLng lu,LatLng rd){
+        List<List<LatLng>> res=new ArrayList<>();
+        Box<RawTrajectory> rawTrajectoryBox = ObjectBox.get().boxFor(RawTrajectory.class);
+        List<RawTrajectory>  rawTrajectoryList=rawTrajectoryBox.getAll();
+        for(RawTrajectory traj:rawTrajectoryList){
+            List<LatLng> cur= RangeQuery.queryByRec(traj.record,lu,rd);
+            if(cur!=null){
+                res.add(cur);
+            }
+        }
+        return res;
     }
 
 }

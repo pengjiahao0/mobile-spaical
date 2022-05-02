@@ -297,7 +297,11 @@ public class BaiduMapRouteFragment extends BaseFragment implements BaiduMap.OnMa
 
     public void initLocationSDK() {
         // 定位初始化
-        mLocClient = new LocationClient(getActivity());
+        try {
+            mLocClient = new LocationClient(getActivity());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         mLocClient.registerLocationListener(this);
         LocationClientOption option = new LocationClientOption();
         option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);
@@ -436,7 +440,7 @@ public class BaiduMapRouteFragment extends BaseFragment implements BaiduMap.OnMa
     }
 
     @Override
-    public boolean onMapPoiClick(MapPoi mapPoi) {
+    public void onMapPoiClick(MapPoi mapPoi) {
         final MyPoiModel poiClickNow = new MyPoiModel(TypeMap.TYPE_BAIDU);
         poiClickNow.setName(mapPoi.getName());
         poiClickNow.setLatitude(mapPoi.getPosition().latitude);
@@ -460,7 +464,6 @@ public class BaiduMapRouteFragment extends BaseFragment implements BaiduMap.OnMa
         builder.create().show();
 
 
-        return true;
     }
 
     @Override

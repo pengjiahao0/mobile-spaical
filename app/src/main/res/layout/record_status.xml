@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="150dp"
+              android:background="#A6000000"
+              android:orientation="vertical"
+              android:layout_gravity="bottom">
+    <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="@color/colorSideNavStart"
+    />
+
+    <LinearLayout
+            android:id="@+id/record"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:orientation="horizontal"
+            android:background="@color/colorBackground"
+    >
+        <TextView
+                android:id="@+id/distance_status"
+                android:text="0.0"
+                android:textSize="@dimen/record_status_text_size"
+                android:gravity="center"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_width="0dp">
+
+        </TextView>
+
+
+        <TextView
+                android:id="@+id/time_status"
+                android:text="0.0"
+                android:textSize="@dimen/record_status_text_size"
+                android:gravity="center"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_width="0dp">
+
+        </TextView>
+
+        <TextView
+                android:id="@+id/avg_speed_status"
+                android:text="0.0"
+                android:textSize="@dimen/record_status_text_size"
+                android:gravity="center"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_width="0dp">
+        </TextView>
+
+    </LinearLayout>
+
+    <LinearLayout
+            android:id="@+id/record_panel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:background="@color/colorPressed"
+    >
+
+        <TextView
+                android:id="@+id/distance"
+                android:text="里程(km)"
+                android:gravity="center"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_width="0dp">
+
+        </TextView>
+
+
+        <TextView
+                android:id="@+id/time"
+                android:text="时长(分钟)"
+                android:gravity="center"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_width="0dp">
+
+        </TextView>
+
+        <TextView
+                android:id="@+id/avg_speed"
+                android:text="速度(km/h)"
+                android:gravity="center"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_width="0dp">
+        </TextView>
+
+    </LinearLayout>
+
+
+<!--    <TextView
+            android:id="@+id/distance"
+            android:text="里程(km)"
+            android:gravity="center"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_width="0dp">
+
+    </TextView>
+
+
+    <TextView
+            android:id="@+id/time"
+            android:text="时长(分钟)"
+            android:gravity="center"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_width="0dp">
+
+    </TextView>
+
+    <TextView
+            android:id="@+id/avg_speed"
+            android:text="速度(km/h)"
+            android:gravity="center"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_width="0dp">
+    </TextView>-->
+
+</LinearLayout>

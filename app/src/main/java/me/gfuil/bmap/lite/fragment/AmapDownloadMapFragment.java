@@ -91,7 +91,11 @@ public class AmapDownloadMapFragment extends BaseFragment implements AdapterView
     }
 
     private void getData() {
-        amapManager = new OfflineMapManager(getActivity(), this);
+        try {
+            amapManager = new OfflineMapManager(getActivity(), this);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         TimerTask task = new TimerTask() {
             @Override

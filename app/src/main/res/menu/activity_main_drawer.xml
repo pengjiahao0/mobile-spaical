@@ -9,7 +9,24 @@
             android:id="@+id/nav_ranging"
             android:icon="@drawable/ic_straighten_24dp"
             android:title="测距"/>
+        <item
+            android:id="@+id/nav_load_data"
+            android:icon="@android:drawable/stat_sys_download_done"
+            android:title="加载数据"/>
     </group>
+    <item android:id="@+id/search_trajectory"
+        android:icon="@drawable/ic_search_white_24dp"
+        android:background="@color/colorBackground"
+        android:title="查询轨迹"/>
+    <item android:id="@+id/show_trajectory"
+        android:icon="@drawable/ic_search_white_24dp"
+        android:background="@color/colorBackground"
+        android:title="显示风险轨迹"/>
+    <item
+        android:id="@+id/record_traj"
+        android:icon="@android:drawable/presence_video_online"
+        android:background="@color/colorBackground"
+        android:title="录制轨迹"/>
     <item
         android:id="@+id/nav_favorite"
         android:icon="@drawable/ic_grade_24dp"

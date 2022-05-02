@@ -3,7 +3,8 @@
     <string name="app_info">简单的双地图应用</string>
     <string name="navigation_drawer_open">open</string>
     <string name="navigation_drawer_close">close</string>
-    <string name="app_protocol">本应用仍在实验阶段，采用百度、高德SDK提供的路线数据，不保证道路安全准确，仅供参考，请自行承担风险。\n本应用不为您的生命安全及财产负责，出行请遵守交通法律法规。</string>
+    <string name="app_protocol">本应用仍在实验阶段，采用百度、高德SDK提供的路线数据，不保证道路安全准确，仅供参考，请自行承担风险。\n本应用不为您的生命安全及财产负责，出行请遵守交通法律法规。
+    </string>
     <string name="loading_more">正在加载更多......</string>
 
     <string name="gps_enabled_false">未打开GPS开关，可能导致定位失败或定位不准</string>
@@ -13,5 +14,20 @@
     <string name="link_thanks">http://www.coolapk.com/u/466253</string>
     <string name="link_download">http://www.coolapk.com/apk/me.gfuil.bmap.lite</string>
     <string name="link_github">https://github.com/gfuil/BmapLite</string>
+    <string name="title_activity_record_traj">RecordTraj</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="title_activity_trajectory_detail">MainActivity</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 
 </resources>

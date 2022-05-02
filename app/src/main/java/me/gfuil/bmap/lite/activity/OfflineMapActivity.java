@@ -18,12 +18,13 @@
 
 package me.gfuil.bmap.lite.activity;
 
-import android.app.Fragment;
+
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
@@ -103,7 +104,7 @@ public class OfflineMapActivity extends BaseActivity {
         titles.add("全部");
         titles.add("已下载百度包");
         titles.add("已下载高德包");
-        mPager.setAdapter(new ViewPagerAdapter(getFragmentManager(), fragments, titles));
+        mPager.setAdapter(new ViewPagerAdapter(getSupportFragmentManager(), fragments, titles));
         mPager.setOffscreenPageLimit(fragments.size());
         mTab.setupWithViewPager(mPager);
 
@@ -188,32 +189,38 @@ public class OfflineMapActivity extends BaseActivity {
         }
 
 
-        final OfflineMapManager amapManager = new OfflineMapManager(this, new OfflineMapManager.OfflineMapDownloadListener() {
-            @Override
-            public void onDownload(int i, int i1, String s) {
+        OfflineMapManager amapManager = null;
+        try {
+            amapManager = new OfflineMapManager(this, new OfflineMapManager.OfflineMapDownloadListener() {
+                @Override
+                public void onDownload(int i, int i1, String s) {
 
-            }
+                }
 
-            @Override
-            public void onCheckUpdate(boolean b, String s) {
+                @Override
+                public void onCheckUpdate(boolean b, String s) {
 
-            }
+                }
 
-            @Override
-            public void onRemove(boolean b, String s, String s1) {
+                @Override
+                public void onRemove(boolean b, String s, String s1) {
 
-            }
-        });
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         List<OfflineMapCity> cityList = amapManager.getDownloadOfflineMapCityList();
         if (null != cityList && !cityList.isEmpty()) {
             for (final OfflineMapCity city : cityList) {
                 if (city.getState() == OfflineMapStatus.NEW_VERSION || city.getState() == OfflineMapStatus.CHECKUPDATES) {
                     count++;
+                    final OfflineMapManager finalAmapManager = amapManager;
                     showAlertDialog("提示", city.getCity() + "有新版本了，是否更新？", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             try {
-                                amapManager.updateOfflineCityByCode(city.getCode());
+                                finalAmapManager.updateOfflineCityByCode(city.getCode());
                             } catch (AMapException e) {
                                 e.printStackTrace();
                                 onMessage("更新失败");

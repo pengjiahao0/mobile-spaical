@@ -307,7 +307,11 @@ public class BaiduMapFragment extends BaseFragment implements BaiduMap.OnMapClic
 
     public void initLocationSdk() {
         // 定位初始化
-        mLocClient = new LocationClient(getActivity());
+        try {
+            mLocClient = new LocationClient(getActivity());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         mLocClient.registerLocationListener(this);
         LocationClientOption option = new LocationClientOption();
         option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);
@@ -513,7 +517,7 @@ public class BaiduMapFragment extends BaseFragment implements BaiduMap.OnMapClic
     }
 
     @Override
-    public boolean onMapPoiClick(MapPoi mapPoi) {
+    public void onMapPoiClick(MapPoi mapPoi) {
         if (mIsModeRanging) {
             MyPoiModel poi = new MyPoiModel(TypeMap.TYPE_BAIDU);
             poi.setLatitude(mapPoi.getPosition().latitude);
@@ -540,7 +544,6 @@ public class BaiduMapFragment extends BaseFragment implements BaiduMap.OnMapClic
         }
         ((MainActivity) getActivity()).showSearchResultLay(false);
 
-        return true;
     }
 
 

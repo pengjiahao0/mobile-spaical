@@ -89,13 +89,33 @@
             android:layout_gravity="right|bottom"
             android:src="@drawable/ic_directions_white_24dp" />
 
-        <FrameLayout
-            android:id="@+id/lay_status"
-            android:layout_width="match_parent"
-            android:layout_height="1px"
-            android:background="#55000000"
-            android:visibility="gone"/>
+<!--        <FrameLayout-->
+<!--            android:id="@+id/lay_status"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="1px"-->
+<!--            android:background="#55000000"-->
+<!--            android:visibility="gone"/>-->
 
+        <TextView
+            android:id="@+id/quit_query"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center|bottom"
+            android:layout_marginBottom="20dp"
+            android:textSize="28sp"
+            android:background="@drawable/text_corner"
+            android:textColor="@color/keyword8"
+            android:text="退出查询模式"
+            />
+
+        <com.github.mikephil.charting.charts.PieChart
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:id="@+id/pic_chart"
+            android:layout_gravity="left|center"
+
+            >
+        </com.github.mikephil.charting.charts.PieChart>
 
     </android.support.design.widget.CoordinatorLayout>
 

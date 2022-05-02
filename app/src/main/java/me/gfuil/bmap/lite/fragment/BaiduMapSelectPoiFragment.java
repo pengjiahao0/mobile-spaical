@@ -184,7 +184,11 @@ public class BaiduMapSelectPoiFragment extends BaseFragment implements BaiduMap.
 
     public void initBaiduSdk() {
         // 定位初始化
-        mLocClient = new LocationClient(getActivity());
+        try {
+            mLocClient = new LocationClient(getActivity());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         mLocClient.registerLocationListener(this);
         LocationClientOption option = new LocationClientOption();
         option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);

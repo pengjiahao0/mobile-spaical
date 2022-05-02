@@ -444,7 +444,11 @@ public class RouteBaiduBusActivity extends BaseActivity implements View.OnClickL
 
     public void initLocationSDK() {
 // 定位初始化
-        mLocClient = new LocationClient(this);
+        try {
+            mLocClient = new LocationClient(this);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         mLocClient.registerLocationListener(this);
         LocationClientOption option = new LocationClientOption();
         option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);
@@ -613,8 +617,8 @@ public class RouteBaiduBusActivity extends BaseActivity implements View.OnClickL
     }
 
     @Override
-    public boolean onMapPoiClick(MapPoi mapPoi) {
-        return false;
+    public void onMapPoiClick(MapPoi mapPoi) {
+
     }
 
     @Override

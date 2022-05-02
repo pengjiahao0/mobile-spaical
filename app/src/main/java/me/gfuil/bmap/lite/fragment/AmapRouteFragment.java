@@ -315,7 +315,12 @@ public class AmapRouteFragment extends BaseFragment implements View.OnClickListe
         mLayPlanAll.setVisibility(View.GONE);
         mBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
 
-        RouteSearch routeSearch = new RouteSearch(getActivity());
+        RouteSearch routeSearch = null;
+        try {
+            routeSearch = new RouteSearch(getActivity());
+        } catch (AMapException e) {
+            e.printStackTrace();
+        }
         routeSearch.setRouteSearchListener(this);
         RouteSearch.FromAndTo fromAndTo = new RouteSearch.FromAndTo(
                 new LatLonPoint(mPoiStart.getLatitude(), mPoiStart.getLongitude()),

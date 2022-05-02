@@ -20,6 +20,7 @@ package me.gfuil.bmap.lite.interacter;
 
 import android.content.Context;
 
+import com.amap.api.services.core.AMapException;
 import com.amap.api.services.core.LatLonPoint;
 import com.amap.api.services.core.PoiItem;
 import com.amap.api.services.core.SuggestionCity;
@@ -43,6 +44,7 @@ import com.baidu.mapapi.search.poi.OnGetPoiSearchResultListener;
 import com.baidu.mapapi.search.poi.PoiCitySearchOption;
 import com.baidu.mapapi.search.poi.PoiDetailResult;
 import com.baidu.mapapi.search.poi.PoiDetailSearchOption;
+import com.baidu.mapapi.search.poi.PoiDetailSearchResult;
 import com.baidu.mapapi.search.poi.PoiIndoorResult;
 import com.baidu.mapapi.search.poi.PoiNearbySearchOption;
 import com.baidu.mapapi.search.poi.PoiResult;
@@ -130,7 +132,12 @@ public class SearchInteracter {
         PoiSearch.SearchBound bound = new PoiSearch.SearchBound(new LatLonPoint(nearby.getLatitude(),
                 nearby.getLongitude()), 20000);
 
-        PoiSearch poiSearchAmap = new PoiSearch(mContext, query);
+        PoiSearch poiSearchAmap = null;
+        try {
+            poiSearchAmap = new PoiSearch(mContext, query);
+        } catch (AMapException e) {
+            e.printStackTrace();
+        }
         poiSearchAmap.setBound(bound);
         poiSearchAmap.setOnPoiSearchListener(new PoiSearch.OnPoiSearchListener() {
             @Override
@@ -214,6 +221,11 @@ public class SearchInteracter {
             }
 
             @Override
+            public void onGetPoiDetailResult(PoiDetailSearchResult poiDetailSearchResult) {
+
+            }
+
+            @Override
             public void onGetPoiIndoorResult(PoiIndoorResult poiIndoorResult) {
 
             }
@@ -227,7 +239,12 @@ public class SearchInteracter {
         query.setPageSize(20);
         query.setPageNum(page);
 
-        PoiSearch poiSearchAmap = new PoiSearch(mContext, query);
+        PoiSearch poiSearchAmap = null;
+        try {
+            poiSearchAmap = new PoiSearch(mContext, query);
+        } catch (AMapException e) {
+            e.printStackTrace();
+        }
         poiSearchAmap.setOnPoiSearchListener(new PoiSearch.OnPoiSearchListener() {
             @Override
             public void onPoiSearched(com.amap.api.services.poisearch.PoiResult poiResult, int code) {
@@ -321,6 +338,11 @@ public class SearchInteracter {
             }
 
             @Override
+            public void onGetPoiDetailResult(PoiDetailSearchResult poiDetailSearchResult) {
+
+            }
+
+            @Override
             public void onGetPoiIndoorResult(PoiIndoorResult poiIndoorResult) {
 
             }
@@ -359,7 +381,12 @@ public class SearchInteracter {
         }
 
         RegeocodeQuery query = new RegeocodeQuery(new LatLonPoint(latLng.latitude, latLng.longitude), 200, GeocodeSearch.AMAP);
-        GeocodeSearch geocodeSearch = new GeocodeSearch(mContext);
+        GeocodeSearch geocodeSearch = null;
+        try {
+            geocodeSearch = new GeocodeSearch(mContext);
+        } catch (AMapException e) {
+            e.printStackTrace();
+        }
         geocodeSearch.setOnGeocodeSearchListener(new GeocodeSearch.OnGeocodeSearchListener() {
             @Override
             public void onRegeocodeSearched(RegeocodeResult result, int i) {
@@ -503,7 +530,12 @@ public class SearchInteracter {
     }
 
     private void getPoiDetailsByAmap(String uid, OnBaseListener listener) {
-        PoiSearch poiSearch = new PoiSearch(mContext, null);
+        PoiSearch poiSearch = null;
+        try {
+            poiSearch = new PoiSearch(mContext, null);
+        } catch (AMapException e) {
+            e.printStackTrace();
+        }
         poiSearch.setOnPoiSearchListener(new PoiSearch.OnPoiSearchListener() {
             @Override
             public void onPoiSearched(com.amap.api.services.poisearch.PoiResult poiResult, int i) {
@@ -526,6 +558,11 @@ public class SearchInteracter {
 
             @Override
             public void onGetPoiDetailResult(PoiDetailResult poiDetailResult) {
+            }
+
+            @Override
+            public void onGetPoiDetailResult(PoiDetailSearchResult poiDetailSearchResult) {
+
             }
 
             @Override

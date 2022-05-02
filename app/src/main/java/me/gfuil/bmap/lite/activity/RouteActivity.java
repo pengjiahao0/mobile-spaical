@@ -18,12 +18,12 @@
 
 package me.gfuil.bmap.lite.activity;
 
-import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -309,7 +309,7 @@ public class RouteActivity extends BaseActivity implements TabLayout.OnTabSelect
         bundle.putParcelable("end", mPoiEnd);
         bundle.putSerializable("type", type);
 
-        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 
         if (type == TypeNavigation.HISTORY) {
             if (null == mHistoryFragment) {

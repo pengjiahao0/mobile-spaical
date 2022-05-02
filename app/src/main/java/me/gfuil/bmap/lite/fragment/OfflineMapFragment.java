@@ -73,7 +73,11 @@ public class OfflineMapFragment extends BaseFragment implements MKOfflineMapList
         mOffline = new MKOfflineMap();
         mOffline.init(this);
 
-        amapManager = new OfflineMapManager(getActivity(), this);
+        try {
+            amapManager = new OfflineMapManager(getActivity(), this);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
 //        try {
 //            MapsInitializer.initialize(getActivity());

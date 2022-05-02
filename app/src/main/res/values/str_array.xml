@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="file_type_array">
+        <item>csv</item>
+        <item>xls</item>
+        <item>txt</item>
+        <item>xlsx</item>
+    </string-array>
+    <string-array name="data_type_array">
+        <item>轨迹数据</item>
+        <item>POI数据</item>
+        <item>公交站点</item>
+        <item>公交路线</item>
+        <item>站点顺序</item>
+        <item>公交出行轨迹</item>
+        <item>病例活动</item>
+    </string-array>
+</resources>

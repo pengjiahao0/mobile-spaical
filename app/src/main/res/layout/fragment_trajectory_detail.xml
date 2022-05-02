@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:tools="http://schemas.android.com/tools"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+             tools:context=".fragment.TrajectoryDetailFragment">
+
+    <com.amap.api.maps.MapView
+            android:id="@+id/detail_map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+    <include layout="@layout/record_status"/>
+
+    <TextView
+            android:id="@+id/date"
+            android:background="#3327B829"
+            android:layout_height="40dp"
+            android:layout_width="match_parent"
+    />
+</FrameLayout>

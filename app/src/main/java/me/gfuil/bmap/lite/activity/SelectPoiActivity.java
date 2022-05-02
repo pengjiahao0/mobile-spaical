@@ -79,10 +79,10 @@ public class SelectPoiActivity extends BaseActivity {
 
         if (BApp.TYPE_MAP == TypeMap.TYPE_BAIDU) {
             mBaiduMapFragment = BaiduMapSelectPoiFragment.newInstance();
-            getFragmentManager().beginTransaction().replace(R.id.lay_content, mBaiduMapFragment).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.lay_content, mBaiduMapFragment).commit();
         } else if (BApp.TYPE_MAP == TypeMap.TYPE_AMAP) {
             mAmapFragment = AmapSelectPoiFragment.newInstance();
-            getFragmentManager().beginTransaction().replace(R.id.lay_content, mAmapFragment).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.lay_content, mAmapFragment).commit();
         }
 
     }

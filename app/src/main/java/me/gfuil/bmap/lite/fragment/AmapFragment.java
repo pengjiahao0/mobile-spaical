@@ -88,7 +88,7 @@ public class AmapFragment extends BaseFragment implements AMap.OnMapClickListene
     private ListView mListFloors;
     private ImageView mImageCompass;
     private MapView mMapView;
-    private AMap mAmap;
+    public AMap mAmap;
     private MyLocationStyle mLocClient;
     private boolean isFirstLoc = true; // 是否首次定位
     private boolean isRequest = false;//是否手动触发请求定位
@@ -145,6 +145,7 @@ public class AmapFragment extends BaseFragment implements AMap.OnMapClickListene
         initView(view);
         mMapView.onCreate(savedInstanceState);
         getDate();
+        initAmapSdk();
         return view;
     }
 
@@ -304,7 +305,12 @@ public class AmapFragment extends BaseFragment implements AMap.OnMapClickListene
         mLocClient.strokeColor(Color.argb(50, 0, 0, 255));
         mLocClient.myLocationIcon(BitmapDescriptorFactory.fromResource(R.drawable.map_location_marker));
         mAmap.setMyLocationStyle(mLocClient);
+        mAmap.setOnPolylineClickListener(new AMap.OnPolylineClickListener() {
+            @Override
+            public void onPolylineClick(Polyline polyline) {
 
+            }
+        });
 
         try {
             LocationManager locManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);

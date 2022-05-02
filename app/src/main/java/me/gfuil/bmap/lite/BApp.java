@@ -27,6 +27,7 @@ import android.support.multidex.MultiDex;
 import android.support.v7.app.AppCompatDelegate;
 
 import com.amap.api.maps.MapsInitializer;
+import com.amap.api.services.core.ServiceSettings;
 import com.baidu.mapapi.CoordType;
 import com.baidu.mapapi.SDKInitializer;
 import com.baidu.mapapi.map.MapView;
@@ -80,9 +81,9 @@ public class BApp extends Application {
    */
   private void initMap() {
     ConfigInteracter configInteracter = new ConfigInteracter(this);
-    TYPE_MAP = configInteracter.getTypeMap();
+    TYPE_MAP = TypeMap.TYPE_AMAP;
     String dirPath = configInteracter.getDirectory();
-
+    SDKInitializer.setAgreePrivacy(getApplicationContext(), true);
     try {
       SDKInitializer.initialize(dirPath, getApplicationContext());
     } catch (Exception e) {
@@ -96,7 +97,10 @@ public class BApp extends Application {
     } catch (RemoteException e) {
       e.printStackTrace();
     }
-
+    MapsInitializer.updatePrivacyShow(getApplicationContext(),true,true);
+    MapsInitializer.updatePrivacyAgree(getApplicationContext(),true);
+    ServiceSettings.updatePrivacyShow(getApplicationContext(),true,true);
+    ServiceSettings.updatePrivacyAgree(getApplicationContext(),true);
     MapsInitializer.sdcardDir = dirPath + File.separator + "Amap";
 
     File dir = new File(getExternalFilesDir(""), "Theme");

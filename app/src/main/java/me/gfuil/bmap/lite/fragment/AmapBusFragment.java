@@ -91,7 +91,11 @@ public class AmapBusFragment extends BaseFragment implements AdapterView.OnItemC
     }
 
     private void getData() {
-        mRouteSearch = new RouteSearch(getActivity());
+        try {
+            mRouteSearch = new RouteSearch(getActivity());
+        } catch (AMapException e) {
+            e.printStackTrace();
+        }
         mRouteSearch.setRouteSearchListener(this);
 
         reRoute(getArguments());

@@ -48,6 +48,7 @@ public class BaseActivity extends AppCompatActivity implements OnBaseListener {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         //super.onSaveInstanceState(outState);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
